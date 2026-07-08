@@ -112,6 +112,8 @@ Global actions:
 - Import Progress
 - Import Complete Roadmap
 
+Layout: List/table format
+
 ⸻
 
 Create Roadmap
@@ -128,6 +130,7 @@ The editor allows:
 - Disconnect nodes
 - Zoom
 - Pan
+- Edit node details (notes in Markdown)
 
 Saving creates:
 
@@ -142,7 +145,9 @@ Selecting a roadmap opens Study Mode.
 
 Study Mode disables editing.
 
-Clicking a node toggles its completion state.
+Clicking a node opens a sidebar with node details (Markdown notes rendered).
+
+A dedicated checkbox on each node toggles its completion state.
 
 Progress updates automatically.
 
@@ -152,7 +157,7 @@ Changes are immediately persisted.
 
 Edit Roadmap
 
-The user may switch into Editor Mode at any time.
+The user may switch into Editor Mode at any time via a toggle button in the header.
 
 They may:
 
@@ -161,6 +166,7 @@ They may:
 - Rename nodes
 - Move nodes
 - Reconnect nodes
+- Edit node details (notes in Markdown)
 
 Saving updates the roadmap while preserving progress whenever possible.
 
@@ -181,6 +187,7 @@ Capabilities:
 - Connect nodes
 - Delete nodes
 - Rename nodes
+- Edit node details (Markdown notes)
 - Save
 - Export
 
@@ -196,10 +203,12 @@ Track learning progress.
 
 Capabilities:
 
-- Toggle node completion
+- Toggle node completion via dedicated checkbox
 - View overall progress
 - Zoom
 - Pan
+- View node details in sidebar (Markdown notes rendered)
+- Switch to Editor Mode via header toggle
 
 Restrictions:
 
@@ -228,12 +237,13 @@ edges: RoadmapEdge[];
 Roadmap Node
 
 type RoadmapNode = {
-id: string;
+id: string; // UUID (crypto.randomUUID)
 title: string;
 position: {
 x: number;
 y: number;
 };
+notes: string; // Markdown content
 }
 
 ⸻
@@ -275,7 +285,7 @@ New node added Initialize as incomplete
 Node deleted Remove associated progress
 Node ID changed Treat as a new node
 
-Stable node IDs are therefore required.
+Stable node IDs are therefore required (UUID via crypto.randomUUID).
 
 ⸻
 
@@ -386,6 +396,14 @@ Persistence
 
 - Local Storage
 
+Markdown Rendering
+
+- react-markdown
+
+State Management
+
+- Zustand
+
 No backend.
 
 No database.
@@ -420,7 +438,7 @@ MVP Checklist
 
 Dashboard
 
-- List roadmaps
+- List roadmaps (table layout)
 - Create roadmap
 - Open roadmap
 - Edit roadmap
@@ -437,16 +455,19 @@ Editor
 - Move node
 - Connect nodes
 - Disconnect nodes
+- Edit node details (Markdown notes)
 - Save roadmap
 - Export roadmap
 - Export complete roadmap
 
 Study Mode
 
-- Toggle node completion
+- Toggle node completion (dedicated checkbox)
 - Automatic progress calculation
 - Persist progress
 - Disable editing
+- View node details in sidebar (Markdown notes rendered)
+- Switch to Editor Mode via header toggle
 
 Persistence
 
