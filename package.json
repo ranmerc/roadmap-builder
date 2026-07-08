@@ -10,7 +10,8 @@
     "lint:fix": "oxlint --type-aware --fix",
     "fmt": "oxfmt",
     "fmt:check": "oxfmt --check",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "deploy": "bash deploy.sh"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.3.2",
