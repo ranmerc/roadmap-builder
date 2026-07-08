@@ -1,4 +1,4 @@
-import type { Node, BuiltInNode } from "@xyflow/react";
+import type { Node } from "@xyflow/react";
+import type { RoadmapNodeData } from "../mapper";
 
-export type PositionLoggerNode = Node<{ label: string }, "position-logger">;
-export type AppNode = BuiltInNode | PositionLoggerNode;
+export type RoadmapNode = Node<RoadmapNodeData, "roadmap-node">;

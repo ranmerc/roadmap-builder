@@ -118,7 +118,7 @@ Layout: List/table format
 
 Create Roadmap
 
-The user enters Editor Mode.
+The user enters Edit Mode.
 
 The editor allows:
 
@@ -141,9 +141,9 @@ Saving creates:
 
 Open Roadmap
 
-Selecting a roadmap opens Study Mode.
+Selecting a roadmap opens the default progress-tracking view.
 
-Study Mode disables editing.
+This view disables structural editing.
 
 Clicking a node opens a sidebar with node details (Markdown notes rendered).
 
@@ -157,16 +157,17 @@ Changes are immediately persisted.
 
 Edit Roadmap
 
-The user may switch into Editor Mode at any time via a toggle button in the header.
+The user may switch into Edit Mode at any time via a button in the header.
 
 They may:
 
-- Add nodes
-- Remove nodes
+- Add nodes (Enter/ Tab)
+- Remove nodes (Delete)
 - Rename nodes
-- Move nodes
-- Reconnect nodes
+- Move nodes (drag)
+- Reconnect nodes (drag between handles, or Delete to disconnect)
 - Edit node details (notes in Markdown)
+- Undo/redo all edit operations (Ctrl+Z / Cmd+Z, Ctrl+Shift+Z / Cmd+Shift+Z)
 
 Saving updates the roadmap while preserving progress whenever possible.
 
@@ -174,28 +175,9 @@ Saving updates the roadmap while preserving progress whenever possible.
 
 Application Modes
 
-Editor Mode
+The application has two modes accessed from within a roadmap view.
 
-Purpose:
-
-Create and edit roadmap structure.
-
-Capabilities:
-
-- Editable nodes
-- Draggable nodes
-- Connect nodes
-- Delete nodes
-- Rename nodes
-- Edit node details (Markdown notes)
-- Save
-- Export
-
-Completion is not displayed.
-
-⸻
-
-Study Mode
+Default View (Progress Tracking)
 
 Purpose:
 
@@ -203,19 +185,42 @@ Track learning progress.
 
 Capabilities:
 
-- Toggle node completion via dedicated checkbox
-- View overall progress
-- Zoom
-- Pan
-- View node details in sidebar (Markdown notes rendered)
-- Switch to Editor Mode via header toggle
+- Toggle node completion via dedicated checkbox on each node
+- Click node to view details in sidebar (Markdown notes rendered)
+- View overall progress percentage in the header
+- Zoom, pan
+- Navigate to dashboard via back arrow
 
 Restrictions:
 
-- Nodes cannot move.
-- Nodes cannot reconnect.
-- Nodes cannot be edited.
-- Nodes cannot be deleted.
+- No structural editing
+
+⸻
+
+Edit Mode
+
+Purpose:
+
+Create and edit roadmap structure.
+
+Capabilities:
+
+- Add node (Enter = sibling, Tab = child)
+- Delete node (Delete/Backspace key)
+- Rename node (inline edit in sidebar)
+- Edit node details (Markdown notes) in sidebar
+- Drag nodes (position persisted on drag end)
+- Connect nodes (drag between handles)
+- Disconnect nodes (select edge, press Delete)
+- Smart edge routing: edges connect to the correct side handle (left, right, top, bottom) based on node positions
+- Undo (Ctrl+Z / Cmd+Z) and redo (Ctrl+Shift+Z / Cmd+Shift+Z / Ctrl+Y / Cmd+Y) for all edit operations
+- Save (exits Edit Mode and persists to Local Storage)
+- Export
+
+Restrictions:
+
+- Completion checkboxes are hidden
+- Progress percentage is not shown
 
 ⸻
 
@@ -447,27 +452,28 @@ Dashboard
 - Import progress
 - Import complete roadmap
 
-Editor
+Edit Mode
 
-- Add node
-- Delete node
+- Add node (Enter/Tab)
+- Delete node (Delete/Backspace)
 - Rename node
-- Move node
-- Connect nodes
-- Disconnect nodes
+- Move node (drag)
+- Connect nodes (drag between handles)
+- Disconnect nodes (select edge, Delete)
+- Smart edge routing (handle selection by position)
 - Edit node details (Markdown notes)
+- Undo/redo (Ctrl+Z / Cmd+Z, Ctrl+Shift+Z / Cmd+Shift+Z)
 - Save roadmap
 - Export roadmap
 - Export complete roadmap
 
-Study Mode
+Default View (Progress Tracking)
 
 - Toggle node completion (dedicated checkbox)
 - Automatic progress calculation
 - Persist progress
 - Disable editing
 - View node details in sidebar (Markdown notes rendered)
-- Switch to Editor Mode via header toggle
 
 Persistence
 
@@ -482,8 +488,8 @@ Guiding Philosophy
 
 Roadmap Tracker should feel like an editable version of roadmap.sh.
 
-Editor Mode should be focused entirely on creating and organizing learning paths.
+Edit Mode should be focused entirely on creating and organizing learning paths.
 
-Study Mode should be focused entirely on completing those learning paths.
+The default view should be focused entirely on completing those learning paths.
 
 The application should remain lightweight, responsive, offline-first, and purpose-built for learning, avoiding unnecessary complexity or features unrelated to roadmap creation and progress tracking.
