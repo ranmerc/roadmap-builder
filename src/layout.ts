@@ -58,7 +58,7 @@ function layoutSubtree(
 ): void {
   const subtreeHeight = heightMemo[nodeId];
   const nodeX = centerX - NODE_WIDTH / 2;
-  const nodeY = centerY - subtreeHeight / 2;
+  const nodeY = centerY - NODE_HEIGHT / 2;
   positions[nodeId] = { x: nodeX, y: nodeY };
 
   const children = childrenMap[nodeId] || [];
@@ -86,6 +86,7 @@ function layoutSubtree(
 export function calculateLayout(
   nodes: Record<string, RoadmapNode>,
   edges: RoadmapEdge[],
+  storedNodes?: Record<string, RoadmapNode>,
 ): Record<string, { x: number; y: number }> {
   const { roots, childrenMap } = buildTree(nodes, edges);
   const heightMemo: Record<string, number> = {};
@@ -101,8 +102,12 @@ export function calculateLayout(
 
   if (roots.length === 1) {
     const rootId = roots[0];
-    const childCount = childrenMap[rootId]?.length ?? 0;
-    const leftChildren = Math.ceil(childCount / 2);
+    const children = childrenMap[rootId] ?? [];
+
+    const stableSplit = getStableSplitIndex(children, storedNodes);
+    const leftChildren = stableSplit;
+
+    childrenMap[rootId] = sortChildrenStable(children, storedNodes);
 
     const leftHeight = calculateSideHeight(rootId, childrenMap, heightMemo, 0, leftChildren);
     const rightHeight = calculateSideHeight(
@@ -110,7 +115,7 @@ export function calculateLayout(
       childrenMap,
       heightMemo,
       leftChildren,
-      childCount,
+      children.length,
     );
 
     const totalHeight = Math.max(heightMemo[rootId], leftHeight, rightHeight);
@@ -143,6 +148,72 @@ export function calculateLayout(
   return positions;
 }
 
+function getStableSplitIndex(
+  children: string[],
+  storedNodes?: Record<string, RoadmapNode>,
+): number {
+  if (!storedNodes || children.length <= 1) {
+    return Math.ceil(children.length / 2);
+  }
+
+  let leftCount = 0;
+  let rightCount = 0;
+
+  for (const childId of children) {
+    const stored = storedNodes[childId];
+    if (stored && stored.position.x < 0) {
+      leftCount++;
+    } else if (stored && stored.position.x >= 0) {
+      rightCount++;
+    }
+  }
+
+  for (const childId of children) {
+    const stored = storedNodes[childId];
+    if (!stored) {
+      if (leftCount <= rightCount) {
+        leftCount++;
+      } else {
+        rightCount++;
+      }
+    }
+  }
+
+  return leftCount;
+}
+
+function sortChildrenStable(
+  children: string[],
+  storedNodes?: Record<string, RoadmapNode>,
+): string[] {
+  if (!storedNodes) return children;
+
+  const left: string[] = [];
+  const right: string[] = [];
+  const unknown: string[] = [];
+
+  for (const childId of children) {
+    const stored = storedNodes[childId];
+    if (stored && stored.position.x < 0) {
+      left.push(childId);
+    } else if (stored && stored.position.x >= 0) {
+      right.push(childId);
+    } else {
+      unknown.push(childId);
+    }
+  }
+
+  for (const childId of unknown) {
+    if (left.length <= right.length) {
+      left.push(childId);
+    } else {
+      right.push(childId);
+    }
+  }
+
+  return [...left, ...right];
+}
+
 function calculateSideHeight(
   nodeId: string,
   childrenMap: Record<string, string[]>,
@@ -170,9 +241,8 @@ function layoutSubtreeSplit(
   positions: Record<string, { x: number; y: number }>,
   splitIndex: number,
 ): void {
-  const subtreeHeight = heightMemo[nodeId];
   const nodeX = centerX - NODE_WIDTH / 2;
-  const nodeY = centerY - subtreeHeight / 2;
+  const nodeY = centerY - NODE_HEIGHT / 2;
   positions[nodeId] = { x: nodeX, y: nodeY };
 
   const children = childrenMap[nodeId] || [];
@@ -223,86 +293,5 @@ function layoutSubtreeSplit(
       currentY += childHeight + SIBLING_GAP;
     }
   }
-}
-
-function findParentNode(edges: RoadmapEdge[], nodeId: string): string | null {
-  const edge = edges.find((e) => e.target === nodeId);
-  return edge ? edge.source : null;
-}
-
-function getChildren(edges: RoadmapEdge[], nodeId: string): string[] {
-  return edges.filter((e) => e.source === nodeId).map((e) => e.target);
-}
-
-export function getNewSiblingPosition(
-  nodes: Record<string, RoadmapNode>,
-  edges: RoadmapEdge[],
-  selectedNodeId: string,
-): { x: number; y: number } {
-  const selectedNode = nodes[selectedNodeId];
-  if (!selectedNode) return { x: 0, y: 0 };
-
-  const parentId = findParentNode(edges, selectedNodeId);
-
-  if (!parentId) {
-    const rootIds = Object.keys(nodes).filter((id) => !edges.some((e) => e.target === id));
-    const rightmostX = rootIds.reduce((max, id) => {
-      const x = nodes[id]?.position.x ?? 0;
-      return x > max ? x : max;
-    }, -Infinity);
-    return {
-      x: rightmostX === -Infinity ? 0 : rightmostX,
-      y: selectedNode.position.y + NODE_HEIGHT + SIBLING_GAP,
-    };
   }
 
-  const siblings = getChildren(edges, parentId).filter((id) => id !== selectedNodeId);
-
-  if (siblings.length === 0) {
-    return {
-      x: selectedNode.position.x,
-      y: selectedNode.position.y + NODE_HEIGHT + SIBLING_GAP,
-    };
-  }
-
-  const rightmostY = siblings.reduce((max, id) => {
-    const y = nodes[id]?.position.y ?? 0;
-    return y > max ? y : max;
-  }, selectedNode.position.y);
-
-  return {
-    x: selectedNode.position.x,
-    y: rightmostY + NODE_HEIGHT + SIBLING_GAP,
-  };
-}
-
-export function getNewChildPosition(
-  nodes: Record<string, RoadmapNode>,
-  edges: RoadmapEdge[],
-  parentId: string,
-): { x: number; y: number } {
-  const parentNode = nodes[parentId];
-  if (!parentNode) return { x: 200, y: 0 };
-
-  const existingChildren = getChildren(edges, parentId);
-
-  const isLeftSide = parentNode.position.x < 0;
-  const direction = isLeftSide ? -1 : 1;
-
-  if (existingChildren.length === 0) {
-    return {
-      x: parentNode.position.x + direction * LEVEL_GAP,
-      y: parentNode.position.y,
-    };
-  }
-
-  const rightmostY = existingChildren.reduce((max, id) => {
-    const y = nodes[id]?.position.y ?? 0;
-    return y > max ? y : max;
-  }, parentNode.position.y);
-
-  return {
-    x: parentNode.position.x + direction * LEVEL_GAP,
-    y: rightmostY + NODE_HEIGHT + SIBLING_GAP,
-  };
-}

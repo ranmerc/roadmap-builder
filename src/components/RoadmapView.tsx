@@ -22,7 +22,7 @@ import {
 } from "../mapper";
 import { nodeTypes } from "../nodes";
 import { Sidebar } from "./Sidebar";
-import { calculateLayout, getNewSiblingPosition, getNewChildPosition } from "../layout";
+import { calculateLayout } from "../layout";
 import type { Roadmap } from "../types";
 
 function findParent(edges: { source: string; target: string }[], nodeId: string): string | null {
@@ -147,7 +147,7 @@ export function RoadmapView() {
     if (lastRoadmapIdRef.current === roadmap.id) return;
     lastRoadmapIdRef.current = roadmap.id;
 
-    const positions = calculateLayout(roadmap.nodes, roadmap.edges);
+    const positions = calculateLayout(roadmap.nodes, roadmap.edges, roadmap.nodes);
     const positionedRoadmap = {
       ...roadmap,
       nodes: Object.fromEntries(
@@ -183,7 +183,7 @@ export function RoadmapView() {
 
     if (hasStructuralChange || rebuildKey > 0) {
       setRebuildKey(0);
-      const positions = calculateLayout(roadmap.nodes, roadmap.edges);
+      const positions = calculateLayout(roadmap.nodes, roadmap.edges, roadmap.nodes);
       const { nodes: newNodes, edges: newEdges } = roadmapToFlow(
         {
           ...roadmap,
@@ -232,6 +232,24 @@ export function RoadmapView() {
       })),
     );
   }, [selectedNodeId, setNodes]);
+
+  useEffect(() => {
+    if (!roadmap) return;
+    setNodes((nds) =>
+      nds.map((n) => {
+        const domainNode = roadmap.nodes[n.id];
+        if (!domainNode) return n;
+        return {
+          ...n,
+          data: {
+            ...n.data,
+            label: domainNode.title,
+            notes: domainNode.notes,
+          },
+        };
+      }),
+    );
+  }, [roadmap, setNodes]);
 
   const onConnect = useCallback(
     (connection: Connection) => {
@@ -299,27 +317,29 @@ export function RoadmapView() {
   );
 
   const createNewNode = useCallback(
-    (position: { x: number; y: number }, parentId?: string) => {
+    (parentId?: string) => {
       if (!roadmap || !currentRoadmapId) return null;
       snapshotForUndo();
       const id = crypto.randomUUID();
-      const newNode = {
-        id,
-        type: "roadmap-node" as const,
-        position,
-        data: {
-          label: "New Node",
+
+      const updatedNodes = {
+        ...roadmap.nodes,
+        [id]: {
+          id,
+          title: "New Node",
+          position: { x: 0, y: 0 },
           notes: "",
-          roadmapNodeId: id,
-          isCompleted: false,
-          isSelected: false,
-          isEditorMode,
-          onNodeClick: handleNodeClick,
-          onToggleComplete: handleToggleComplete,
         },
       };
 
-      let newEdge: {
+      const updatedRoadmapEdges = parentId
+        ? [...roadmap.edges, { id: `${parentId}->${id}`, source: parentId, target: id }]
+        : roadmap.edges;
+
+      const positions = calculateLayout(updatedNodes, updatedRoadmapEdges, roadmap.nodes);
+      const nodePosition = positions[id] ?? { x: 0, y: 0 };
+
+      let rfEdge: {
         id: string;
         source: string;
         target: string;
@@ -328,12 +348,9 @@ export function RoadmapView() {
         targetHandle?: string;
       } | null = null;
 
-      if (parentId) {
-        const parentNode = roadmap.nodes[parentId];
-        const handles = parentNode
-          ? getHandlePositions(parentNode.position, position)
-          : { sourceHandle: "bottom", targetHandle: "top" };
-        newEdge = {
+      if (parentId && positions[parentId]) {
+        const handles = getHandlePositions(positions[parentId], nodePosition);
+        rfEdge = {
           id: `${parentId}->${id}`,
           source: parentId,
           target: id,
@@ -343,26 +360,43 @@ export function RoadmapView() {
         };
       }
 
-      setNodes((nds) => [...nds, newNode]);
-      if (newEdge) {
-        setEdges((eds) => [...eds, newEdge]);
-      }
-
-      const updatedRoadmap = {
-        ...roadmap,
-        nodes: {
-          ...roadmap.nodes,
-          [id]: {
-            id,
-            title: "New Node",
-            position,
+      setNodes((nds) => [
+        ...nds.map((n) => ({
+          ...n,
+          position: positions[n.id] ?? n.position,
+        })),
+        {
+          id,
+          type: "roadmap-node" as const,
+          position: nodePosition,
+          data: {
+            label: "New Node",
             notes: "",
+            roadmapNodeId: id,
+            isCompleted: false,
+            isSelected: false,
+            isEditorMode,
+            onNodeClick: handleNodeClick,
+            onToggleComplete: handleToggleComplete,
           },
         },
-        edges: newEdge ? [...roadmap.edges, newEdge] : roadmap.edges,
+      ]);
+
+      if (rfEdge) {
+        setEdges((eds) => [...eds, rfEdge]);
+      }
+
+      updateRoadmap({
+        ...roadmap,
+        nodes: Object.fromEntries(
+          Object.entries(updatedNodes).map(([nid, node]) => [
+            nid,
+            { ...node, position: positions[nid] ?? node.position },
+          ]),
+        ),
+        edges: updatedRoadmapEdges,
         updatedAt: new Date().toISOString(),
-      };
-      updateRoadmap(updatedRoadmap);
+      });
 
       return id;
     },
@@ -381,9 +415,8 @@ export function RoadmapView() {
 
   const handleAddSibling = useCallback(() => {
     if (!selectedNodeId || !roadmap) return;
-    const position = getNewSiblingPosition(roadmap.nodes, roadmap.edges, selectedNodeId);
     const parentId = findParent(roadmap.edges, selectedNodeId);
-    const newId = createNewNode(position, parentId ?? undefined);
+    const newId = createNewNode(parentId ?? undefined);
     if (newId) {
       setSelectedNodeId(newId);
     }
@@ -391,8 +424,7 @@ export function RoadmapView() {
 
   const handleAddChild = useCallback(() => {
     if (!selectedNodeId || !roadmap) return;
-    const position = getNewChildPosition(roadmap.nodes, roadmap.edges, selectedNodeId);
-    const newId = createNewNode(position, selectedNodeId);
+    const newId = createNewNode(selectedNodeId);
     if (newId) {
       setSelectedNodeId(newId);
     }
@@ -400,9 +432,7 @@ export function RoadmapView() {
 
   const handleAddRootNode = useCallback(() => {
     if (!roadmap) return;
-    const existingCount = Object.keys(roadmap.nodes).length;
-    const position = { x: 100 + existingCount * 250, y: 100 };
-    const newId = createNewNode(position);
+    const newId = createNewNode();
     if (newId) {
       setSelectedNodeId(newId);
     }

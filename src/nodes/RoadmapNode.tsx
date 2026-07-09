@@ -29,6 +29,7 @@ export function RoadmapNodeComponent({ data }: NodeProps) {
       onClick={handleClick}
     >
       <Handle type="target" position={Position.Top} id="top" className="!bg-slate-400" />
+      <Handle type="source" position={Position.Top} id="top" className="!bg-slate-400" />
       <Handle type="target" position={Position.Left} id="left" className="!bg-slate-400" />
       <Handle type="target" position={Position.Right} id="right" className="!bg-slate-400" />
 
@@ -63,6 +64,7 @@ export function RoadmapNodeComponent({ data }: NodeProps) {
       </div>
 
       <Handle type="source" position={Position.Bottom} id="bottom" className="!bg-slate-400" />
+      <Handle type="target" position={Position.Bottom} id="bottom" className="!bg-slate-400" />
       <Handle type="source" position={Position.Left} id="left" className="!bg-slate-400" />
       <Handle type="source" position={Position.Right} id="right" className="!bg-slate-400" />
     </div>
