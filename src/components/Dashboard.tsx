@@ -200,22 +200,10 @@ export function Dashboard() {
                     <td className="px-4 py-3">
                       <div className="flex justify-end gap-1">
                         <button
-                          onClick={() => setCurrentRoadmap(roadmap.id)}
-                          className="px-2 py-1 text-sm text-slate-600 hover:bg-slate-100 rounded"
-                        >
-                          Open
-                        </button>
-                        <button
-                          onClick={() => setCurrentRoadmap(roadmap.id)}
-                          className="px-2 py-1 text-sm text-slate-600 hover:bg-slate-100 rounded"
-                        >
-                          Edit
-                        </button>
-                        <button
                           onClick={() => handleExportRoadmap(roadmap)}
                           className="px-2 py-1 text-sm text-slate-600 hover:bg-slate-100 rounded"
                         >
-                          Export
+                          Export Roadmap
                         </button>
                         <button
                           onClick={() => handleExportProgress(roadmap)}
