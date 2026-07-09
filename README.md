@@ -1,12 +1,18 @@
 # Roadmap Builder
 
-This is a simple web application for creating roadmaps and tracking progress.
+This is a simple web application for creating roadmaps and tracking progress. Everything is stored in local storage. You can import and export your roadmaps with or without progress.
 
-All of the code written here was generated using OpenCode.
+Check it out here - <https://ranmerc.github.io/roadmap-builder/>
 
-'Nemotron 3 Ultra Free' for planning.
-'MiMo V2.5 Free' for building.
-'DeepSeek V4 Flash Free' for fixing bugs.
+Optimized for desktop. Won't work on mobile.
+
+## LLM Disclaimer
+
+All of the code in this repository here was generated using OpenCode. None of the code was reviewed.
+
+- 'Nemotron 3 Ultra Free' for planning.
+- 'MiMo V2.5 Free' for building.
+- 'DeepSeek V4 Flash Free' for fixing bugs.
 
 Skills:
 
